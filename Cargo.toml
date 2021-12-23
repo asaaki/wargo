@@ -1,0 +1,23 @@
+[package]
+name = "wargo"
+description = "cargo's evil twin to work with projects in the twilight zone of WSL2"
+version = "0.1.0"
+edition = "2021"
+authors = [
+  "Christoph Grabo <asaaki@mannaz.cc>",
+  "The wargo Contributors"
+]
+readme = "README.md"
+homepage = "https://github.com/asaaki/wargo"
+repository = "https://github.com/asaaki/wargo"
+categories = [
+  "command-line-utilities",
+  "development-tools",
+  "development-tools::build-utils",
+  # "development-tools::cargo-plugins",
+]
+keywords = ["cargo", "wsl", "wsl2", "windows", "cli"]
+license = "MIT OR Apache-2.0"
+exclude = [".github/*"]
+
+[dependencies]
