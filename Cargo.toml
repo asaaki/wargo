@@ -14,10 +14,36 @@ categories = [
   "command-line-utilities",
   "development-tools",
   "development-tools::build-utils",
-  # "development-tools::cargo-plugins",
+  "development-tools::cargo-plugins",
 ]
 keywords = ["cargo", "wsl", "wsl2", "windows", "cli"]
 license = "MIT OR Apache-2.0"
 exclude = [".github/*"]
 
+publish = false
+
+[lib]
+name = "wargo_lib"
+
+# https://fasterthanli.me/articles/why-is-my-rust-build-so-slow
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+incremental = true
+
 [dependencies]
+cargo_metadata = "0.14.1"
+dirs = "4.0.0"
+filetime = "0.2.15"
+globwalk = "0.8.1"
+indicatif = "0.17.0-beta.1"
+serde = { version = "1.0.133", features = ["derive"] }
+tempfile = "3.2.0"
+toml = "0.5.8"
+
+# fd-lock = "3.0.2"
+
+# idea
+[workspace.metadata.wargo]
+# use same config options as in Wargo.toml
