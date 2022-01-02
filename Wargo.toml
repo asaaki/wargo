@@ -1,0 +1,29 @@
+# if unset, the current project's folder name is used (default)
+# project_dir = "hello-world"
+
+# will be created if missing, must be writeable by the executing user
+#
+# the project folder will be copied into it:
+# project folder: wargo
+# dest_base_dir: /tmp
+# result:        /tmp/wargo
+#
+# default: ~/tmp (user home dir + tmp)
+dest_base_dir = "~/tmp"
+
+# before each call clean the destination (remove whole project)
+clean = false
+
+# don't include .git folder in copy;
+# disable if you want/need .git related data during compilation
+ignore_git = true
+# don't include target folder in copy;
+# disable if you have a good reason for it,
+# if you found one, please tell me ;-)
+ignore_target = true
+
+# following items are still TODO, but also not super important yet:
+
+# use a mktemp-like approach
+use_mktemp = false # if for every call a new temp dir should be creaded
+mktemp_rchars = 5 # the random part after the dot: project_dir.XXXXX

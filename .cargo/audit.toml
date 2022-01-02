@@ -1,0 +1,9 @@
+# https://github.com/RustSec/cargo-audit/blob/main/audit.toml.example
+
+[advisories]
+ignore = []
+informational_warnings = ["unmaintained", "unsound"]
+
+[output]
+quiet = false
+deny = ["warnings"]

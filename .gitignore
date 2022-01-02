@@ -1,1 +1,4 @@
+.envrc
+.tools
 /target
+*.xcf

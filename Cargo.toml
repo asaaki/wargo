@@ -1,7 +1,7 @@
 [package]
 name = "wargo"
 description = "cargo's evil twin to work with projects in the twilight zone of WSL2"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 authors = [
   "Christoph Grabo <asaaki@mannaz.cc>",
@@ -14,10 +14,35 @@ categories = [
   "command-line-utilities",
   "development-tools",
   "development-tools::build-utils",
-  # "development-tools::cargo-plugins",
+  "development-tools::cargo-plugins",
 ]
 keywords = ["cargo", "wsl", "wsl2", "windows", "cli"]
 license = "MIT OR Apache-2.0"
 exclude = [".github/*"]
 
+[lib]
+name = "wargo_lib"
+
+# https://fasterthanli.me/articles/why-is-my-rust-build-so-slow
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+incremental = true
+
 [dependencies]
+cargo_metadata = "0.14.1"
+dirs = "4.0.0"
+filetime = "0.2.15"
+globwalk = "0.8.1"
+indicatif = "0.17.0-rc.1"
+serde = { version = "1.0.133", features = ["derive"] }
+tempfile = "3.2.0"
+toml = "0.5.8"
+
+# maybe we want to prevent concurrent runs of wargo eventually:
+# fd-lock = "3.0.2"
+
+# idea
+[workspace.metadata.wargo]
+# use same config options as in Wargo.toml
