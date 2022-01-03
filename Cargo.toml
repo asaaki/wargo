@@ -37,7 +37,7 @@ cargo_metadata = "0.14.1"
 dirs = "4.0.0"
 filetime = "0.2.15"
 globwalk = "0.8.1"
-indicatif = "0.17.0-beta.1"
+indicatif = "0.17.0-rc.1"
 serde = { version = "1.0.133", features = ["derive"] }
 tempfile = "3.2.0"
 toml = "0.5.8"
