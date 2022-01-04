@@ -1,6 +1,6 @@
 [alias]
-# cargo +nightly fixit
-fixit = "clippy --fix -Z unstable-options --allow-dirty"
+# $> cargo fixit
+fixit = "clippy --fix --allow-dirty --allow-no-vcs"
 
 # when you want to use lld or mold
 [target.x86_64-unknown-linux-gnu]
