@@ -18,7 +18,7 @@ categories = [
 ]
 keywords = ["cargo", "wsl", "wsl2", "windows", "cli"]
 license = "MIT OR Apache-2.0"
-exclude = [".github/*"]
+exclude = [".assets/*", ".cargo/*", ".github/*"]
 
 [lib]
 name = "wargo_lib"
