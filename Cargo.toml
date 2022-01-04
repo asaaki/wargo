@@ -37,8 +37,10 @@ filetime = "0.2.15"
 globwalk = "0.8.1"
 indicatif = "0.17.0-rc.1"
 serde = { version = "1.0.133", features = ["derive"] }
-tempfile = "3.2.0"
 toml = "0.5.8"
+
+# not used (yet)
+# tempfile = "3.2.0"
 
 # maybe we want to prevent concurrent runs of wargo eventually:
 # fd-lock = "3.0.2"
