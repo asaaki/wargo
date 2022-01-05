@@ -8,6 +8,7 @@
 #![forbid(unsafe_code)]
 
 use cargo_metadata::{Message, MetadataCommand};
+use color_eyre::eyre::{Context, Result};
 use filetime::{set_symlink_file_times, FileTime};
 use globwalk::DirEntry;
 use serde::Deserialize;
@@ -18,7 +19,6 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    result::Result,
     vec,
 };
 
@@ -28,9 +28,6 @@ mod progress;
 
 type GenericResult<T> = Result<T, Box<dyn Error>>;
 pub type NullResult = GenericResult<()>;
-// type IoResult = std::io::Result<()>;
-// type OkResult<T> = Result<T, core::convert::Infallible>;
-// type StringResult = OkResult<String>;
 
 const SKIPPABLES: [&str; 4] = ["wargo", "cargo-wsl", "cargo", "wsl"];
 
@@ -48,23 +45,37 @@ https://github.com/asaaki/wargo
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 struct WargoConfig {
+    /// optionally override the project folder name
+    /// in the destination base directory
     project_dir: Option<String>,
-    dest_base_dir: Option<String>,
-    use_mktemp: bool,
-    mktemp_rchars: u8,
-    #[serde(default = "default_true")]
-    ignore_git: bool,
-    #[serde(default = "default_true")]
-    ignore_target: bool,
-    clean: bool,
-}
 
-const fn default_true() -> bool {
-    true
+    /// optionally set a different destination base directory
+    dest_base_dir: Option<String>,
+
+    /// @deprecated - will be removed in v0.3
+    ignore_git: Option<bool>,
+
+    /// preferred since v0.2
+    /// de-Option with v0.3
+    include_git: Option<bool>,
+
+    /// @deprecated - will be removed in v0.3
+    ignore_target: Option<bool>,
+
+    /// preferred since v0.2
+    /// de-Option with v0.3
+    include_target: Option<bool>,
+
+    /// clean out the project folder before run
+    /// (will remove and recreate folder)
+    clean: bool,
+
+    /// internal option
+    #[serde(skip)]
+    clean_git: bool,
 }
 
 pub fn run(_from: &str) -> NullResult {
-    // dbg!(_from);
     check::wsl2_or_exit()?;
 
     let args = parse_args();
@@ -79,37 +90,15 @@ pub fn run(_from: &str) -> NullResult {
         .workspace_root
         .into_std_path_buf()
         .canonicalize()?;
-    let wargo_config = get_wargo_config(&workspace_root)?;
+    let mut wargo_config = get_wargo_config(&workspace_root)?;
     let dest_dir = get_destination_dir(&wargo_config, &workspace_root);
-    let entries = collect_entries(&wargo_config, &workspace_root)?;
 
-    if wargo_config.clean && dest_dir.exists() {
-        fs::remove_dir_all(&dest_dir)?;
-    }
-    fs::create_dir_all(&dest_dir)?;
-    copy_files(entries, &workspace_root, &dest_dir)?;
+    let entries = collect_entries(&mut wargo_config, &workspace_root)?;
+    copy_files(entries, &wargo_config, &workspace_root, &dest_dir)?;
+
     let artifacts = exec_cargo_command(&dest_dir, &workspace_root, args)?;
     copy_artifacts(&dest_dir, &workspace_root, artifacts)?;
 
-    Ok(())
-}
-
-fn copy_artifacts<P>(dest_dir: &P, workspace_root: &P, artifacts: Vec<PathBuf>) -> NullResult
-where
-    P: AsRef<Path>,
-{
-    if !artifacts.is_empty() {
-        for artifact in artifacts {
-            let rel_artifact = artifact.strip_prefix(&dest_dir)?;
-            let origin_location = &workspace_root.as_ref().join(rel_artifact);
-
-            if let Some(parent) = origin_location.parent() {
-                fs::create_dir_all(&parent)?;
-                fs::copy(artifact, origin_location)?;
-                eprintln!("Copied compile artifact to: {}", origin_location.display());
-            }
-        }
-    };
     Ok(())
 }
 
@@ -126,19 +115,91 @@ fn parse_args() -> Vec<String> {
     args
 }
 
+fn get_wargo_config<P>(workspace_root: &P) -> GenericResult<WargoConfig>
+where
+    P: AsRef<Path>,
+{
+    let wargo_config = workspace_root.as_ref().join("Wargo.toml");
+
+    let wargo_config: WargoConfig = if wargo_config.exists() {
+        let wargo_config = fs::read_to_string(wargo_config)?;
+        toml::from_str(&wargo_config)?
+    } else {
+        WargoConfig::default()
+    };
+
+    Ok(wargo_config)
+}
+
+fn get_destination_dir<P>(wargo_config: &WargoConfig, workspace_root: &P) -> PathBuf
+where
+    P: AsRef<Path>,
+{
+    let project_dir = get_project_dir(wargo_config, &workspace_root);
+
+    let dest = if let Some(dir) = &wargo_config.dest_base_dir {
+        paths::untilde(dir)
+    } else {
+        // TODO(maybe): handle rare case of None (if no home dir can be determined)
+        let home = dirs::home_dir().unwrap();
+        home.join("tmp")
+    }
+    .join(project_dir);
+
+    paths::normalize_path(&dest)
+}
+
+fn get_project_dir<'a, P>(wargo_config: &'a WargoConfig, workspace_root: &'a P) -> &'a OsStr
+where
+    P: AsRef<Path>,
+{
+    let project_dir = if let Some(dir) = &wargo_config.project_dir {
+        OsStr::new(dir)
+    } else {
+        workspace_root.as_ref().iter().last().unwrap()
+    };
+    project_dir
+}
+
 fn collect_entries<P>(
-    wargo_config: &WargoConfig,
+    wargo_config: &mut WargoConfig,
     workspace_root: &P,
 ) -> GenericResult<Vec<DirEntry>>
 where
     P: AsRef<Path>,
 {
     let mut patterns = vec!["**"];
-    if wargo_config.ignore_git {
-        patterns.push("!.git")
+
+    // migration phase (v0.2) - remove ignore_* blocks and de-optionize with v0.3
+
+    if let Some(include_git) = wargo_config.include_git {
+        if !include_git {
+            patterns.push("!.git");
+        } else {
+            wargo_config.clean_git = true;
+        }
+    } else if let Some(ignore_git) = wargo_config.ignore_git {
+        if ignore_git {
+            patterns.push("!.git");
+        } else {
+            wargo_config.clean_git = true;
+        }
+    } else {
+        // default if no option was provided
+        patterns.push("!.git");
     }
-    if wargo_config.ignore_target {
-        patterns.push("!target")
+
+    if let Some(include_target) = wargo_config.include_target {
+        if !include_target {
+            patterns.push("!target");
+        }
+    } else if let Some(ignore_target) = wargo_config.ignore_target {
+        if ignore_target {
+            patterns.push("!target");
+        }
+    } else {
+        // default if no option was provided
+        patterns.push("!target");
     }
 
     let entries: Vec<DirEntry> =
@@ -151,10 +212,26 @@ where
     Ok(entries)
 }
 
-fn copy_files<P>(entries: Vec<DirEntry>, workspace_root: &P, dest_dir: &P) -> NullResult
+fn copy_files<P>(
+    entries: Vec<DirEntry>,
+    wargo_config: &WargoConfig,
+    workspace_root: &P,
+    dest_dir: &P,
+) -> NullResult
 where
     P: AsRef<Path>,
 {
+    if wargo_config.clean && dest_dir.as_ref().exists() {
+        fs::remove_dir_all(&dest_dir).context("dest_dir cleaning failed")?;
+    }
+
+    fs::create_dir_all(&dest_dir).context("dest_dir creation failed")?;
+
+    let git_dir = &dest_dir.as_ref().join(".git");
+    if wargo_config.clean_git && git_dir.exists() {
+        fs::remove_dir_all(&git_dir).context("dest_dir/.git cleaning failed")?;
+    }
+
     let bar = progress::bar(entries.len() as u64);
     for entry in bar.wrap_iter(entries.iter()) {
         let is_dir = entry.file_type().is_dir();
@@ -167,14 +244,22 @@ where
         let atime = FileTime::from_last_access_time(&metadata);
 
         if is_dir {
-            fs::create_dir_all(dst_path)?;
+            fs::create_dir_all(dst_path).context("Directory creation failed")?;
         } else {
             // TODO(maybe): should skip if file is unchanged;
             // OTOH it would mean more FS calls/checks
-            fs::copy(src_path, dst_path)?;
+            fs::copy(src_path, dst_path).with_context(|| {
+                format!(
+                    "Copying failed: {} -> {}",
+                    &src_path.display(),
+                    &dst_path.display()
+                )
+            })?;
         }
 
-        set_symlink_file_times(dst_path, atime, mtime)?;
+        set_symlink_file_times(dst_path, atime, mtime).with_context(|| {
+            format!("Setting file timestamps failed for {}", &dst_path.display())
+        })?;
     }
     bar.finish_with_message("Files copied");
     Ok(())
@@ -232,42 +317,21 @@ where
     Ok(files)
 }
 
-fn get_wargo_config<P>(workspace_root: &P) -> GenericResult<WargoConfig>
+fn copy_artifacts<P>(dest_dir: &P, workspace_root: &P, artifacts: Vec<PathBuf>) -> NullResult
 where
     P: AsRef<Path>,
 {
-    let wargo_config = workspace_root.as_ref().join("Wargo.toml");
-    let wargo_config = fs::read_to_string(wargo_config)?;
-    let wargo_config: WargoConfig = toml::from_str(&wargo_config)?;
-    Ok(wargo_config)
-}
+    if !artifacts.is_empty() {
+        for artifact in artifacts {
+            let rel_artifact = artifact.strip_prefix(&dest_dir)?;
+            let origin_location = &workspace_root.as_ref().join(rel_artifact);
 
-fn get_destination_dir<P>(wargo_config: &WargoConfig, workspace_root: &P) -> PathBuf
-where
-    P: AsRef<Path>,
-{
-    let project_dir = get_project_dir(wargo_config, &workspace_root);
-
-    let dest = if let Some(dir) = &wargo_config.dest_base_dir {
-        paths::untilde(dir)
-    } else {
-        // TODO(maybe): handle rare case of None (if no home dir can be determined)
-        let home = dirs::home_dir().unwrap();
-        home.join("tmp")
-    }
-    .join(project_dir);
-
-    paths::normalize_path(&dest)
-}
-
-fn get_project_dir<'a, P>(wargo_config: &'a WargoConfig, workspace_root: &'a P) -> &'a OsStr
-where
-    P: AsRef<Path>,
-{
-    let project_dir = if let Some(dir) = &wargo_config.project_dir {
-        OsStr::new(dir)
-    } else {
-        workspace_root.as_ref().iter().last().unwrap()
+            if let Some(parent) = origin_location.parent() {
+                fs::create_dir_all(&parent)?;
+                fs::copy(artifact, origin_location)?;
+                eprintln!("Copied compile artifact to: {}", origin_location.display());
+            }
+        }
     };
-    project_dir
+    Ok(())
 }

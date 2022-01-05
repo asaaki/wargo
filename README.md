@@ -40,16 +40,20 @@ If you believe there is a feature missing or a tweak necessary, feel free to ope
 cargo install wargo
 ```
 
-### Wargo.toml
+### Wargo.toml (optional)
 
-Add a basic `Wargo.toml` to your project. The wargo wrapper does not accept any arguments on its own.
+Add a basic `Wargo.toml` to your project if you want to configure the behaviour.
+The wargo wrapper does not accept any CLI arguments on its own, so a config file is the only option for now.
 
 ```toml
+# Wargo.toml
+
+# this is also the default
 dest_base_dir = "~/tmp"
 ```
 
-The file could be completely empty (yet must exist), but at least `dest_base_dir` is good to specify.
-Use either your home dir (`~`) or any other absolute path, which is **not** an NTFS file system.
+The file could be completely empty, but at least `dest_base_dir` is good to specify.
+Use either a location in your home dir (`~`) or any other absolute path, which is **not** an NTFS file system.
 
 See a complete and commented example [here].
 
