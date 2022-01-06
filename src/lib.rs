@@ -76,6 +76,7 @@ struct WargoConfig {
 }
 
 pub fn run(_from: &str) -> NullResult {
+    color_eyre::install()?;
     check::wsl2_or_exit()?;
 
     let args = parse_args();
