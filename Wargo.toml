@@ -20,8 +20,8 @@ clean = false
 # Enable if you want/need .git related data during compilation.
 #
 # !!!
-# If enabled it will always clean the .git folder on every run,
-# because git creates read-only files, which we cannot copy over once created.
+# If enabled it will always clean the .git folder in the destination on every run,
+# because git creates read-only files, which we cannot overwrite once created.
 #
 # default: false
 include_git = false
