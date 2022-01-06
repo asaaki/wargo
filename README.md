@@ -7,14 +7,14 @@ _cargo's evil twin to work with projects in the twilight zone of WSL2_
 
 ## Motivation
 
-I have written a blog post about it and even gave a simple solution via Makefile, [go check it out].
-
 The gist of the issue is the following:
 
 > You work with both Windows and WSL2.
 > Your repositories live on a NTFS partition.
 > Therefore the compilation performance within WSL2 will suffer,
 > because the files have to cross the VM/file system boundaries.
+
+Slightly more elaborate background and reasoning can be found in my article on [how to speed up Rust compilation].
 
 ## Solution
 
@@ -93,5 +93,5 @@ be dual licensed as above, without any additional terms or conditions.
 
 <!-- links -->
 
-[go check it out]: https://markentier.tech/posts/2022/01/speedy-rust-builds-under-wsl2/
+[how to speed up Rust compilation]: https://markentier.tech/posts/2022/01/speedy-rust-builds-under-wsl2/
 [here]: https://github.com/asaaki/wargo/blob/main/Wargo.toml
