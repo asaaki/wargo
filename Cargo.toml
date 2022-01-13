@@ -35,7 +35,7 @@ opt-level = 3
 
 [dependencies]
 cargo_metadata = "0.14.1"
-color-eyre = { version = "0.5.11", default-features = false }
+color-eyre = { version = "0.6.0", default-features = false }
 dirs = "4.0.0"
 filetime = "0.2.15"
 globwalk = "0.8.1"
