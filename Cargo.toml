@@ -40,7 +40,7 @@ dirs = "4.0.0"
 filetime = "0.2.15"
 globwalk = "0.8.1"
 indicatif = "0.17.0-rc.1"
-serde = { version = "1.0.134", features = ["derive"] }
+serde = { version = "1.0.135", features = ["derive"] }
 toml = "0.5.8"
 
 # maybe we want to prevent concurrent runs of wargo eventually:
