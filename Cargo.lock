@@ -263,9 +263,9 @@ checksum = "ce23b50ad8242c51a442f3ff322d56b02f08852c77e4c0b4d3fd684abc89c683"
 
 [[package]]
 name = "indicatif"
-version = "0.17.0-rc.1"
+version = "0.17.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c112b1e714737c51fa137aaf6ae2cdf6960d01895e096a6feb1e0afd192c790d"
+checksum = "360231681f04fa66f736fb52f829d0400fe0316e1797e9eb95182946d6d205b3"
 dependencies = [
  "console",
  "number_prefix",
