@@ -39,7 +39,7 @@ color-eyre = { version = "0.6.0", default-features = false }
 dirs = "4.0.0"
 filetime = "0.2.15"
 globwalk = "0.8.1"
-indicatif = "0.17.0-rc.4"
+indicatif = "0.17.0-rc.5"
 serde = { version = "1.0.134", features = ["derive"] }
 toml = "0.5.8"
 
