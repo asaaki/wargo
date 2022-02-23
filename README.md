@@ -37,7 +37,7 @@ If you believe there is a feature missing or a tweak necessary, feel free to ope
 ### Installation
 
 ```sh
-cargo install wargo
+cargo install wargo --locked
 ```
 
 ### Wargo.toml (optional)
