@@ -33,7 +33,7 @@ opt-level = 3
 cargo_metadata = "0.14.2"
 color-eyre = { version = "0.6.1", default-features = false }
 dirs = "4.0.0"
-filetime = "0.2.15"
+filetime = "0.2.16"
 globwalk = "0.8.1"
 indicatif = "0.17.0-rc.10"
 serde = { version = "1.0.136", features = ["derive"] }
