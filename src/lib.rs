@@ -223,14 +223,14 @@ where
     P: AsRef<Path>,
 {
     if wargo_config.clean && dest_dir.as_ref().exists() {
-        fs::remove_dir_all(&dest_dir).context("dest_dir cleaning failed")?;
+        fs::remove_dir_all(dest_dir).context("dest_dir cleaning failed")?;
     }
 
-    fs::create_dir_all(&dest_dir).context("dest_dir creation failed")?;
+    fs::create_dir_all(dest_dir).context("dest_dir creation failed")?;
 
     let git_dir = &dest_dir.as_ref().join(".git");
     if wargo_config.clean_git && git_dir.exists() {
-        fs::remove_dir_all(&git_dir).context("dest_dir/.git cleaning failed")?;
+        fs::remove_dir_all(git_dir).context("dest_dir/.git cleaning failed")?;
     }
 
     let bar = progress::bar(entries.len() as u64);
@@ -277,7 +277,7 @@ where
     // jump into the same relative place as it was called on the source side
     let ws_rel_location = env::current_dir()?
         .canonicalize()?
-        .strip_prefix(&workspace_root)?
+        .strip_prefix(workspace_root)?
         .to_path_buf();
     let exec_dest = dest_dir.as_ref().join(ws_rel_location).canonicalize()?;
 
@@ -324,11 +324,11 @@ where
 {
     if !artifacts.is_empty() {
         for artifact in artifacts {
-            let rel_artifact = artifact.strip_prefix(&dest_dir)?;
+            let rel_artifact = artifact.strip_prefix(dest_dir)?;
             let origin_location = &workspace_root.as_ref().join(rel_artifact);
 
             if let Some(parent) = origin_location.parent() {
-                fs::create_dir_all(&parent)?;
+                fs::create_dir_all(parent)?;
                 fs::copy(artifact, origin_location)?;
                 eprintln!("Copied compile artifact to: {}", origin_location.display());
             }
