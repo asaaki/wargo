@@ -30,7 +30,7 @@ incremental = true
 opt-level = 3
 
 [dependencies]
-cargo_metadata = "0.15.2"
+cargo_metadata = "0.15.3"
 color-eyre = { version = "0.6.2", default-features = false }
 dirs = "4.0.0"
 filetime = "0.2.19"
