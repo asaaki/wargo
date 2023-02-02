@@ -82,7 +82,7 @@ pub fn run(_from: &str) -> NullResult {
     let args = parse_args();
 
     if args.is_empty() || args[0] == "--help" {
-        println!("{}", HELP_TEXT);
+        println!("{HELP_TEXT}");
         return Ok(());
     }
 
