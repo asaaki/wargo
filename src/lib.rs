@@ -207,7 +207,6 @@ where
         globwalk::GlobWalkerBuilder::from_patterns(workspace_root, &patterns)
             .contents_first(false)
             .build()?
-            .into_iter()
             .filter_map(Result::ok)
             .collect();
     Ok(entries)

@@ -12,7 +12,7 @@ on:
 
 jobs:
   auto-merge:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     # if: github.actor == 'dependabot[bot]'
     # allows to re-run just by relabeling the issue
     if: contains(github.event.pull_request.labels.*.name, 'dependencies')
