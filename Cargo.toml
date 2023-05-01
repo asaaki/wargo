@@ -32,7 +32,7 @@ opt-level = 3
 [dependencies]
 cargo_metadata = "0.15.4"
 color-eyre = { version = "0.6.2", default-features = false }
-dirs = "5.0.0"
+dirs = "5.0.1"
 filetime = "0.2.21"
 globwalk = "0.8.1"
 indicatif = "0.17.3"
