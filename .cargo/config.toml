@@ -5,5 +5,5 @@ fixit = "clippy --fix --allow-dirty --allow-no-vcs"
 # when you want to use lld or mold
 [target.x86_64-unknown-linux-gnu]
 linker = "/usr/bin/clang"
-# rustflags = ["-Clink-arg=-fuse-ld=lld", "-Clink-arg=-Wl,--no-rosegment"]
-rustflags = ["-Clink-arg=-fuse-ld=/usr/local/bin/mold"]
+#rustflags = ["-Clink-arg=-fuse-ld=lld", "-Clink-arg=-Wl,--no-rosegment"]
+#rustflags = ["-Clink-arg=-fuse-ld=/usr/local/bin/mold"]
