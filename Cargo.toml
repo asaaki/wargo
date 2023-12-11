@@ -22,9 +22,10 @@ name = "wargo_lib"
 # https://fasterthanli.me/articles/why-is-my-rust-build-so-slow
 [profile.release]
 opt-level = 3
-lto = true
 codegen-units = 1
+lto = true
 incremental = true
+strip = true
 
 [profile.dev.package.backtrace]
 opt-level = 3
