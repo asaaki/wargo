@@ -298,7 +298,9 @@ where
             let reader = std::io::BufReader::new(cmd.stdout.take().expect("no stdout captured"));
             for message in Message::parse_stream(reader) {
                 if let Message::CompilerArtifact(artifact) = message.unwrap() {
-                    if artifact.target.kind[0] == "bin" {
+                    if ["bin", "dylib", "cdylib", "staticlib"]
+                        .contains(&artifact.target.kind[0].as_str())
+                    {
                         for filename in artifact.filenames {
                             files.push(filename.into_std_path_buf())
                         }
