@@ -33,6 +33,7 @@ opt-level = 3
 [dependencies]
 cargo_metadata = "0.18.1"
 color-eyre = { version = "0.6.2", default-features = false }
+cprint = { version = "0.4.1", features = ["ceprint"] }
 dirs = "5.0.1"
 filetime = "0.2.23"
 globwalk = "0.8.1"

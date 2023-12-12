@@ -8,13 +8,13 @@
 #![forbid(unsafe_code)]
 
 use cargo_metadata::{Message, MetadataCommand};
-use color_eyre::eyre::{Context, Result};
+use color_eyre::eyre::{Context, Ok, Result};
+use cprint::{cprintln, Color};
 use filetime::{set_symlink_file_times, FileTime};
 use globwalk::DirEntry;
 use serde::Deserialize;
 use std::{
     env,
-    error::Error,
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
@@ -26,7 +26,7 @@ mod check;
 mod paths;
 mod progress;
 
-type GenericResult<T> = Result<T, Box<dyn Error>>;
+type GenericResult<T> = Result<T, color_eyre::eyre::ErrReport>;
 pub type NullResult = GenericResult<()>;
 
 const SKIPPABLES: [&str; 4] = ["wargo", "cargo-wsl", "cargo", "wsl"];
@@ -77,6 +77,12 @@ struct WargoConfig {
 
 pub fn run(_from: &str) -> NullResult {
     color_eyre::install()?;
+
+    #[cfg(target_os = "windows")]
+    if wsl2_subshell()? {
+        cprintln!("wargo", "WSL2 subshell done.", Color::Green);
+        return Ok(());
+    }
     check::wsl2_or_exit()?;
 
     let args = parse_args();
@@ -101,6 +107,25 @@ pub fn run(_from: &str) -> NullResult {
     copy_artifacts(&dest_dir, &workspace_root, artifacts)?;
 
     Ok(())
+}
+
+// TODO: add WSL distro configuration and use it here
+// TODO: add option to use a different shell (e.g. zsh)
+#[cfg_attr(target_os = "linux", allow(dead_code))]
+fn wsl2_subshell() -> GenericResult<bool> {
+    if !check::is_wsl2() {
+        let wargo_args = parse_args()[1..].join(" ");
+        let wargo_and_args = format!("wargo {}", wargo_args);
+        let args = ["--shell-type", "login", "--", "bash", "-c", &wargo_and_args];
+        let mut subshell = Command::new("wsl")
+            .env("WARGO_RUN", "1")
+            .args(args)
+            .spawn()?;
+        subshell.wait()?;
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }
 
 fn parse_args() -> Vec<String> {
@@ -171,7 +196,7 @@ where
 {
     let mut patterns = vec!["**"];
 
-    // migration phase (v0.2) - remove ignore_* blocks and de-optionize with v0.3
+    // migration phase (v0.2) - remove ignore_* blocks and de-optionize with v0.4 or later
 
     if let Some(include_git) = wargo_config.include_git {
         if !include_git {
@@ -331,7 +356,11 @@ where
             if let Some(parent) = origin_location.parent() {
                 fs::create_dir_all(parent)?;
                 fs::copy(artifact, origin_location)?;
-                eprintln!("Copied compile artifact to: {}", origin_location.display());
+                cprintln!(
+                    "Copied",
+                    format!("compile artifact to:\n{}", origin_location.display()),
+                    Color::Green
+                );
             }
         }
     };
