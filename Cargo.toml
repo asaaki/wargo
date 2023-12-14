@@ -27,9 +27,6 @@ lto = true
 incremental = true
 strip = true
 
-[profile.dev.package.backtrace]
-opt-level = 3
-
 [dependencies]
 anyhow = "1.0.75"
 cargo_metadata = "0.18.1"
