@@ -13,12 +13,9 @@ jobs:
   security_audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: Swatinem/rust-cache@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+      - uses: actions/checkout@v4.1.1
+      - uses: Swatinem/rust-cache@v2.7.0
+      - uses: dtolnay/rust-toolchain@stable
       - name: Install cargo audit
         run: cargo install cargo-audit
       - name: Run cargo audit
