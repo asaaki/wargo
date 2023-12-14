@@ -21,6 +21,7 @@ Slightly more elaborate background and reasoning can be found in my article on [
 One approach is to copy the files into a location within WSL which is a Linux based filesystem (like ext4) and do the compilation from there. Optionally you need to copy the artifacts back to the origin.
 
 `wargo` does that as a wrapper around cargo:
+
 - copy the project into a Linux location
 - run the provided cargo command
 - copy back the artifacts
