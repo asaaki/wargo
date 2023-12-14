@@ -7,8 +7,8 @@
 #![cfg_attr(feature = "docs", feature(doc_cfg))]
 #![forbid(unsafe_code)]
 
-use cargo_metadata::{Message, MetadataCommand};
 use anyhow::Context;
+use cargo_metadata::{Message, MetadataCommand};
 use cprint::{cprintln, Color};
 use filetime::{set_symlink_file_times, FileTime};
 use globwalk::DirEntry;
