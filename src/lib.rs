@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 
 use cargo_metadata::{Message, MetadataCommand};
-use color_eyre::eyre::{Context, Ok, Result};
+use anyhow::Context;
 use cprint::{cprintln, Color};
 use filetime::{set_symlink_file_times, FileTime};
 use globwalk::DirEntry;
@@ -26,7 +26,7 @@ mod check;
 mod paths;
 mod progress;
 
-type GenericResult<T> = Result<T, color_eyre::eyre::ErrReport>;
+type GenericResult<T> = anyhow::Result<T>;
 pub type NullResult = GenericResult<()>;
 
 const SKIPPABLES: [&str; 4] = ["wargo", "cargo-wsl", "cargo", "wsl"];
@@ -76,11 +76,9 @@ struct WargoConfig {
 }
 
 pub fn run(_from: &str) -> NullResult {
-    color_eyre::install()?;
-
     #[cfg(target_os = "windows")]
     if wsl2_subshell()? {
-        cprintln!("wargo", "WSL2 subshell done.", Color::Green);
+        cprintln!("wargo", "WSL2 subshell done.", Color::Cyan);
         return Ok(());
     }
     check::wsl2_or_exit()?;
