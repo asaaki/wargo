@@ -28,7 +28,7 @@ incremental = true
 strip = true
 
 [dependencies]
-anyhow = "1.0.76"
+anyhow = "1.0.77"
 cargo_metadata = "0.18.1"
 cprint = { version = "0.4.1", features = ["ceprint"] }
 dirs = "5.0.1"
