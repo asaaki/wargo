@@ -311,7 +311,7 @@ where
     if let Some(arg) = cargo_args.first() {
         // special case: cargo build -> use JSON output
         // so we can retrieve and parse the compilation artifacts
-        if arg == "build" {
+        if ["b", "build"].contains(&arg.as_str()) {
             cargo_args.insert(1, "--message-format=json-render-diagnostics".into());
 
             let mut cmd = Command::new("cargo")
