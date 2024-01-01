@@ -115,11 +115,13 @@ fn wsl2_subshell() -> GenericResult<bool> {
         let wargo_args = parse_args()[1..].join(" ");
         let wargo_and_args = format!("wargo {}", wargo_args);
         let args = ["--shell-type", "login", "--", "bash", "-c", &wargo_and_args];
-        let mut subshell = Command::new("wsl")
+
+        cprintln!("wargo", "WSL2 subshelling ...", Color::Cyan);
+        Command::new("wsl")
             .env("WARGO_RUN", "1")
             .args(args)
-            .spawn()?;
-        subshell.wait()?;
+            .spawn()?
+            .wait()?;
         Ok(true)
     } else {
         Ok(false)
