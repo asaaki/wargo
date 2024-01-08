@@ -217,9 +217,9 @@ dependencies = [
 
 [[package]]
 name = "globwalk"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baba373693f105316dff9ebdae694118df59cf8fb3fc21b2acf1e294a3893794"
+checksum = "0bf760ebf69878d9fd8f110c89703d90ce35095324d1f1edcb595c63945ee757"
 dependencies = [
  "bitflags 2.4.1",
  "ignore",
