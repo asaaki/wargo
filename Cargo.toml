@@ -36,7 +36,7 @@ cprint = { version = "0.4.1", features = ["ceprint"] }
 dirs = "5.0.1"
 filetime = "0.2.23"
 globwalk = "0.9.1"
-indicatif = "0.17.7"
+indicatif = "0.17.8"
 serde = { version = "1.0.196", features = ["derive"] }
 toml = "0.8.10"
 
