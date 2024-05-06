@@ -9,7 +9,7 @@
 
 use anyhow::Context;
 use cargo_metadata::{Message, MetadataCommand};
-use cprint::{cprintln, Color};
+use cprint::cprintln;
 use filetime::{set_symlink_file_times, FileTime};
 use globwalk::DirEntry;
 use serde::Deserialize;
@@ -116,7 +116,7 @@ fn wsl2_subshell() -> GenericResult<bool> {
         let wargo_and_args = format!("wargo {}", wargo_args);
         let args = ["--shell-type", "login", "--", "bash", "-c", &wargo_and_args];
 
-        cprintln!("wargo", "WSL2 subshelling ...", Color::Cyan);
+        cprintln!("wargo", "WSL2 subshelling ..." => Cyan);
         Command::new("wsl")
             .env("WARGO_RUN", "1")
             .args(args)
@@ -358,8 +358,7 @@ where
                 fs::copy(artifact, origin_location)?;
                 cprintln!(
                     "Copied",
-                    format!("compile artifact to:\n{}", origin_location.display()),
-                    Color::Green
+                    format!("compile artifact to:\n{}", origin_location.display()) => Green
                 );
             }
         }

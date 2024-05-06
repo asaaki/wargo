@@ -108,9 +108,9 @@ dependencies = [
 
 [[package]]
 name = "cprint"
-version = "0.5.3"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82d060fe01eb334665e418d8a91b0bcb6f9f5af084c52cb5ef622e6c24e7ced5"
+checksum = "64bf4c02be6bb9bbbdaea190da96053c7bc840a48c61848b3f23a351eb16f3e8"
 dependencies = [
  "colored",
 ]

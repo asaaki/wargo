@@ -21,6 +21,10 @@ default-run = "wargo"
 [lib]
 name = "wargo_lib"
 
+[features]
+default = []
+docs = []
+
 # https://fasterthanli.me/articles/why-is-my-rust-build-so-slow
 [profile.release]
 opt-level = 3
@@ -32,7 +36,7 @@ strip = true
 [dependencies]
 anyhow = "1.0.82"
 cargo_metadata = "0.18.1"
-cprint = { version = "0.5.3", features = ["ceprint"] }
+cprint = { version = "1.0.0", features = ["ceprint"] }
 dirs = "5.0.1"
 filetime = "0.2.23"
 globwalk = "0.9.1"
