@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 
 use anyhow::Context;
-use cargo_metadata::{Message, MetadataCommand};
+use cargo_metadata::{Message, MetadataCommand, TargetKind};
 use cprint::cprintln;
 use filetime::{set_symlink_file_times, FileTime};
 use globwalk::DirEntry;
@@ -321,10 +321,15 @@ where
                 .spawn()?;
 
             let reader = std::io::BufReader::new(cmd.stdout.take().expect("no stdout captured"));
-            for message in Message::parse_stream(reader) {
-                if let Message::CompilerArtifact(artifact) = message.unwrap() {
-                    if ["bin", "dylib", "cdylib", "staticlib"]
-                        .contains(&artifact.target.kind[0].as_str())
+            for message in Message::parse_stream(reader).flatten() {
+                if let Message::CompilerArtifact(artifact) = message {
+                    if [
+                        TargetKind::Bin,
+                        TargetKind::DyLib,
+                        TargetKind::CDyLib,
+                        TargetKind::StaticLib,
+                    ]
+                    .contains(&artifact.target.kind[0])
                     {
                         for filename in artifact.filenames {
                             files.push(filename.into_std_path_buf())
