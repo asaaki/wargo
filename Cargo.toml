@@ -35,7 +35,7 @@ strip = true
 
 [dependencies]
 anyhow = "1.0.97"
-cargo_metadata = "0.19.2"
+cargo_metadata = "0.20.0"
 cprint = { version = "1.0.0", features = ["ceprint"] }
 dirs = "6.0.0"
 filetime = "0.2.25"
