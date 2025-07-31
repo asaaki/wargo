@@ -113,7 +113,7 @@ pub fn run(_from: &str) -> NullResult {
 fn wsl2_subshell() -> GenericResult<bool> {
     if !check::is_wsl2() {
         let wargo_args = parse_args()[1..].join(" ");
-        let wargo_and_args = format!("wargo {}", wargo_args);
+        let wargo_and_args = format!("wargo {wargo_args}");
         let args = ["--shell-type", "login", "--", "bash", "-c", &wargo_and_args];
 
         cprintln!("wargo", "WSL2 subshelling ..." => Cyan);
@@ -133,7 +133,7 @@ fn parse_args() -> Vec<String> {
         return Vec::new();
     }
     let args: Vec<String> = env::args()
-        .skip_while(|arg| match arg.split('/').last() {
+        .skip_while(|arg| match arg.split('/').next_back() {
             Some(a) => SKIPPABLES.contains(&a),
             None => false,
         })
@@ -182,7 +182,7 @@ where
     let project_dir = if let Some(dir) = &wargo_config.project_dir {
         OsStr::new(dir)
     } else {
-        workspace_root.as_ref().iter().last().unwrap()
+        workspace_root.as_ref().iter().next_back().unwrap()
     };
     project_dir
 }
