@@ -25,7 +25,7 @@ jobs:
       with:
         toolchain: ${{ matrix.rust }}
 
-    - uses: Swatinem/rust-cache@v2.8.1
+    - uses: Swatinem/rust-cache@v2.8.2
 
     - run: cargo fetch
     - run: cargo check --all
@@ -44,7 +44,7 @@ jobs:
         toolchain: stable
         components: rustfmt, clippy
 
-    - uses: Swatinem/rust-cache@v2.8.1
+    - uses: Swatinem/rust-cache@v2.8.2
 
     - run: cargo check --all
     - run: cargo clippy --tests -- -D warnings
