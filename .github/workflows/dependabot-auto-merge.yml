@@ -17,7 +17,7 @@ jobs:
     # allows to re-run just by relabeling the issue
     if: contains(github.event.pull_request.labels.*.name, 'dependencies')
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.0
       - uses: ahmadnassri/action-dependabot-auto-merge@v2
         with:
           target: patch
