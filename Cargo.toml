@@ -42,7 +42,7 @@ filetime = "0.2.26"
 globwalk = "0.9.1"
 indicatif = "0.18.3"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.146" # force recent version to fix Hash trait conflict in cargo_metadata
+serde_json = "1.0.147" # force recent version to fix Hash trait conflict in cargo_metadata
 toml = "0.9.10"
 
 # maybe we want to prevent concurrent runs of wargo eventually:
