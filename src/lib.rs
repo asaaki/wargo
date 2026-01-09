@@ -101,8 +101,14 @@ pub fn run(_from: &str) -> NullResult {
     let entries = collect_entries(&mut wargo_config, &workspace_root)?;
     copy_files(entries, &wargo_config, &workspace_root, &dest_dir)?;
 
-    let artifacts = exec_cargo_command(&dest_dir, &workspace_root, args)?;
+    let (artifacts, exit_code) = exec_cargo_command(&dest_dir, &workspace_root, args)?;
     copy_artifacts(&dest_dir, &workspace_root, artifacts)?;
+
+    if let Some(code) = exit_code {
+        if code != 0 {
+            std::process::exit(code);
+        }
+    }
 
     Ok(())
 }
@@ -294,7 +300,7 @@ fn exec_cargo_command<P>(
     dest_dir: &P,
     workspace_root: &P,
     args: Vec<String>,
-) -> GenericResult<Vec<PathBuf>>
+) -> GenericResult<(Vec<PathBuf>, Option<i32>)>
 where
     P: AsRef<Path>,
 {
@@ -306,6 +312,7 @@ where
     let exec_dest = dest_dir.as_ref().join(ws_rel_location).canonicalize()?;
 
     let mut files: Vec<PathBuf> = Vec::new();
+    let mut exit_code = None;
 
     let mut cargo_args = args;
     if let Some(arg) = cargo_args.first() {
@@ -337,16 +344,18 @@ where
                     }
                 }
             }
-            cmd.wait()?;
+            let status = cmd.wait()?;
+            exit_code = status.code();
         } else {
             let mut cmd = Command::new("cargo")
                 .args(cargo_args)
                 .current_dir(&exec_dest)
                 .spawn()?;
-            cmd.wait()?;
+            let status = cmd.wait()?;
+            exit_code = status.code();
         }
     };
-    Ok(files)
+    Ok((files, exit_code))
 }
 
 fn copy_artifacts<P>(dest_dir: &P, workspace_root: &P, artifacts: Vec<PathBuf>) -> NullResult
