@@ -70,6 +70,9 @@ struct WargoConfig {
     /// (will remove and recreate folder)
     clean: bool,
 
+    /// optional run cwd override for `wargo run`
+    run_cwd: Option<String>,
+
     /// internal option
     #[serde(skip)]
     clean_git: bool,
@@ -98,8 +101,25 @@ pub fn run(_from: &str) -> NullResult {
     let mut wargo_config = get_wargo_config(&workspace_root)?;
     let dest_dir = get_destination_dir(&wargo_config, &workspace_root);
 
-    let (cargo_args, run_cwd) = extract_run_cwd(args)?;
-    let run_cwd = resolve_run_cwd(run_cwd)?;
+    let (cargo_args, cli_run_cwd) = extract_run_cwd(args)?;
+    let (mut run_cwd, run_cwd_source) = if let Some(cli_run_cwd) = cli_run_cwd {
+        let base_dir = env::current_dir()?;
+        (
+            resolve_run_cwd_with_base(Some(cli_run_cwd), &base_dir, "--run-cwd")?,
+            Some("cli"),
+        )
+    } else if let Some(config_run_cwd) = wargo_config
+        .run_cwd
+        .as_ref()
+        .map(|value| PathBuf::from(value))
+    {
+        (
+            resolve_run_cwd_with_base(Some(config_run_cwd), &workspace_root, "Wargo.toml run_cwd")?,
+            Some("config"),
+        )
+    } else {
+        (None, None)
+    };
 
     if run_cwd.is_some() {
         let is_run = cargo_args
@@ -107,15 +127,19 @@ pub fn run(_from: &str) -> NullResult {
             .map(|arg| ["r", "run"].contains(&arg.as_str()))
             .unwrap_or(false);
         if !is_run {
-            return Err(anyhow::anyhow!("--run-cwd can only be used with `run`"));
-        }
-        let has_manifest_path = cargo_args
-            .iter()
-            .any(|arg| arg == "--manifest-path" || arg.starts_with("--manifest-path="));
-        if has_manifest_path {
-            return Err(anyhow::anyhow!(
-                "--run-cwd cannot be combined with cargo's --manifest-path"
-            ));
+            if run_cwd_source == Some("cli") {
+                return Err(anyhow::anyhow!("--run-cwd can only be used with `run`"));
+            }
+            run_cwd = None;
+        } else {
+            let has_manifest_path = cargo_args
+                .iter()
+                .any(|arg| arg == "--manifest-path" || arg.starts_with("--manifest-path="));
+            if has_manifest_path {
+                return Err(anyhow::anyhow!(
+                    "--run-cwd cannot be combined with cargo's --manifest-path"
+                ));
+            }
         }
     }
 
@@ -195,7 +219,11 @@ fn extract_run_cwd(args: Vec<String>) -> GenericResult<(Vec<String>, Option<Path
     Ok((filtered, run_cwd))
 }
 
-fn resolve_run_cwd(run_cwd: Option<PathBuf>) -> GenericResult<Option<PathBuf>> {
+fn resolve_run_cwd_with_base(
+    run_cwd: Option<PathBuf>,
+    base_dir: &Path,
+    source: &str,
+) -> GenericResult<Option<PathBuf>> {
     let Some(run_cwd) = run_cwd else {
         return Ok(None);
     };
@@ -203,7 +231,7 @@ fn resolve_run_cwd(run_cwd: Option<PathBuf>) -> GenericResult<Option<PathBuf>> {
     let mut resolved = if run_cwd.is_absolute() {
         run_cwd
     } else {
-        env::current_dir()?.join(run_cwd)
+        base_dir.join(run_cwd)
     };
 
     resolved = resolved
@@ -212,7 +240,7 @@ fn resolve_run_cwd(run_cwd: Option<PathBuf>) -> GenericResult<Option<PathBuf>> {
 
     if !resolved.is_dir() {
         return Err(anyhow::anyhow!(
-            "--run-cwd must point to an existing directory"
+            "{source} must point to an existing directory"
         ));
     }
 
