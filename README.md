@@ -44,13 +44,16 @@ cargo install wargo --locked
 ### Wargo.toml (optional)
 
 Add a basic `Wargo.toml` to your project if you want to configure the behaviour.
-Most configuration lives in this file, but `wargo run` also supports a `--run-cwd <DIR>` flag to set the working directory for the executed binary.
+Most configuration lives in this file, and `wargo run` also supports `run_cwd` (config) or `--run-cwd <DIR>` (CLI) to set the working directory for the executed binary. CLI overrides config; both accept absolute paths, while relative `run_cwd` is resolved from the workspace root and relative `--run-cwd` from the current directory.
 
 ```toml
 # Wargo.toml
 
 # this is also the default
 dest_base_dir = "~/tmp"
+
+# optional: run the binary from this directory (relative to the workspace root)
+# run_cwd = "."
 ```
 
 The file could be completely empty, but at least `dest_base_dir` is good to specify.
