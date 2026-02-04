@@ -431,7 +431,9 @@ where
             }
             let status = cmd.wait()?;
             exit_code = status.code();
-        } else if ["r", "run"].contains(&arg.as_str()) && run_cwd.is_some() {
+        } else if ["r", "run"].contains(&arg.as_str())
+            && let Some(run_cwd) = run_cwd
+        {
             let manifest_path = find_manifest_path(&exec_dest, dest_dir.as_ref())
                 .context("Cargo.toml not found when trying to use --run-cwd")?;
             cargo_args.insert(1, "--manifest-path".into());
@@ -439,7 +441,7 @@ where
 
             let mut cmd = Command::new("cargo")
                 .args(cargo_args)
-                .current_dir(run_cwd.as_ref().unwrap())
+                .current_dir(run_cwd)
                 .spawn()?;
             let status = cmd.wait()?;
             exit_code = status.code();
