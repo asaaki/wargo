@@ -81,7 +81,7 @@ struct WargoConfig {
 pub fn run(_from: &str) -> NullResult {
     #[cfg(target_os = "windows")]
     if wsl2_subshell()? {
-        cprintln!("wargo", "WSL2 subshell done.", Color::Cyan);
+        cprintln!("wargo", "WSL2 subshell done." => Color::Cyan);
         return Ok(());
     }
     check::wsl2_or_exit()?;
