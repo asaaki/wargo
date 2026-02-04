@@ -8,7 +8,7 @@ on:
   # https://github.com/ahmadnassri/action-dependabot-auto-merge/issues/60
   pull_request_target:
     # allows to re-run just by relabeling the issue
-    types: [ labeled ]
+    types: [labeled]
 
 jobs:
   auto-merge:

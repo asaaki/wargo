@@ -2,12 +2,12 @@ name: Security Audit
 
 on:
   pull_request:
-    paths: ['**/Cargo.toml', '**/Cargo.lock']
+    paths: ["**/Cargo.toml", "**/Cargo.lock"]
   push:
     branches: [main]
-    paths: ['**/Cargo.toml', '**/Cargo.lock']
+    paths: ["**/Cargo.toml", "**/Cargo.lock"]
   schedule:
-    - cron: '23 5 * * *'
+    - cron: "23 5 * * *"
 
 jobs:
   security_audit:
