@@ -44,7 +44,7 @@ cargo install wargo --locked
 ### Wargo.toml (optional)
 
 Add a basic `Wargo.toml` to your project if you want to configure the behaviour.
-The wargo wrapper does not accept any CLI arguments on its own, so a config file is the only option for now.
+Most configuration lives in this file, but `wargo run` also supports a `--run-cwd <DIR>` flag to set the working directory for the executed binary.
 
 ```toml
 # Wargo.toml
