@@ -108,11 +108,7 @@ pub fn run(_from: &str) -> NullResult {
             resolve_run_cwd_with_base(Some(cli_run_cwd), &base_dir, "--run-cwd")?,
             Some("cli"),
         )
-    } else if let Some(config_run_cwd) = wargo_config
-        .run_cwd
-        .as_ref()
-        .map(|value| PathBuf::from(value))
-    {
+    } else if let Some(config_run_cwd) = wargo_config.run_cwd.as_ref().map(PathBuf::from) {
         (
             resolve_run_cwd_with_base(Some(config_run_cwd), &workspace_root, "Wargo.toml run_cwd")?,
             Some("config"),
