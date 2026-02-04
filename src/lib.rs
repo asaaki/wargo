@@ -10,7 +10,7 @@
 use anyhow::Context;
 use cargo_metadata::{Message, MetadataCommand, TargetKind};
 use cprint::cprintln;
-use filetime::{set_symlink_file_times, FileTime};
+use filetime::{FileTime, set_symlink_file_times};
 use globwalk::DirEntry;
 use serde::Deserialize;
 use std::{
@@ -126,10 +126,10 @@ pub fn run(_from: &str) -> NullResult {
         exec_cargo_command(&dest_dir, &workspace_root, cargo_args, run_cwd)?;
     copy_artifacts(&dest_dir, &workspace_root, artifacts)?;
 
-    if let Some(code) = exit_code {
-        if code != 0 {
-            std::process::exit(code);
-        }
+    if let Some(code) = exit_code
+        && code != 0
+    {
+        std::process::exit(code);
     }
 
     Ok(())
@@ -257,12 +257,11 @@ fn get_project_dir<'a, P>(wargo_config: &'a WargoConfig, workspace_root: &'a P) 
 where
     P: AsRef<Path>,
 {
-    let project_dir = if let Some(dir) = &wargo_config.project_dir {
+    (if let Some(dir) = &wargo_config.project_dir {
         OsStr::new(dir)
     } else {
         workspace_root.as_ref().iter().next_back().unwrap()
-    };
-    project_dir
+    }) as _
 }
 
 fn collect_entries<P>(
@@ -416,24 +415,25 @@ where
 
             let reader = std::io::BufReader::new(cmd.stdout.take().expect("no stdout captured"));
             for message in Message::parse_stream(reader).flatten() {
-                if let Message::CompilerArtifact(artifact) = message {
-                    if [
+                if let Message::CompilerArtifact(artifact) = message
+                    && [
                         TargetKind::Bin,
                         TargetKind::DyLib,
                         TargetKind::CDyLib,
                         TargetKind::StaticLib,
                     ]
                     .contains(&artifact.target.kind[0])
-                    {
-                        for filename in artifact.filenames {
-                            files.push(filename.into_std_path_buf())
-                        }
+                {
+                    for filename in artifact.filenames {
+                        files.push(filename.into_std_path_buf())
                     }
                 }
             }
             let status = cmd.wait()?;
             exit_code = status.code();
-        } else if ["r", "run"].contains(&arg.as_str()) && run_cwd.is_some() {
+        } else if ["r", "run"].contains(&arg.as_str())
+            && let Some(run_cwd) = run_cwd
+        {
             let manifest_path = find_manifest_path(&exec_dest, dest_dir.as_ref())
                 .context("Cargo.toml not found when trying to use --run-cwd")?;
             cargo_args.insert(1, "--manifest-path".into());
@@ -441,7 +441,7 @@ where
 
             let mut cmd = Command::new("cargo")
                 .args(cargo_args)
-                .current_dir(run_cwd.as_ref().unwrap())
+                .current_dir(run_cwd)
                 .spawn()?;
             let status = cmd.wait()?;
             exit_code = status.code();

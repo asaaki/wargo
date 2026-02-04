@@ -2,7 +2,7 @@
 name = "wargo"
 description = "cargo's evil twin to work with projects in the twilight zone of WSL2"
 version = "0.4.1"
-edition = "2021"
+edition = "2024"
 readme = "README.md"
 homepage = "https://github.com/asaaki/wargo"
 repository = "https://github.com/asaaki/wargo"
