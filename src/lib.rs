@@ -10,7 +10,7 @@
 use anyhow::Context;
 use cargo_metadata::{Message, MetadataCommand, TargetKind};
 use cprint::cprintln;
-use filetime::{set_symlink_file_times, FileTime};
+use filetime::{FileTime, set_symlink_file_times};
 use globwalk::DirEntry;
 use serde::Deserialize;
 use std::{
@@ -70,6 +70,9 @@ struct WargoConfig {
     /// (will remove and recreate folder)
     clean: bool,
 
+    /// optional run cwd override for `wargo run`
+    run_cwd: Option<String>,
+
     /// internal option
     #[serde(skip)]
     clean_git: bool,
@@ -78,7 +81,7 @@ struct WargoConfig {
 pub fn run(_from: &str) -> NullResult {
     #[cfg(target_os = "windows")]
     if wsl2_subshell()? {
-        cprintln!("wargo", "WSL2 subshell done.", Color::Cyan);
+        cprintln!("wargo", "WSL2 subshell done." => Cyan);
         return Ok(());
     }
     check::wsl2_or_exit()?;
@@ -98,16 +101,55 @@ pub fn run(_from: &str) -> NullResult {
     let mut wargo_config = get_wargo_config(&workspace_root)?;
     let dest_dir = get_destination_dir(&wargo_config, &workspace_root);
 
+    let (cargo_args, cli_run_cwd) = extract_run_cwd(args)?;
+    let (mut run_cwd, run_cwd_source) = if let Some(cli_run_cwd) = cli_run_cwd {
+        let base_dir = env::current_dir()?;
+        (
+            resolve_run_cwd_with_base(Some(cli_run_cwd), &base_dir, "--run-cwd")?,
+            Some("cli"),
+        )
+    } else if let Some(config_run_cwd) = wargo_config.run_cwd.as_ref().map(PathBuf::from) {
+        (
+            resolve_run_cwd_with_base(Some(config_run_cwd), &workspace_root, "Wargo.toml run_cwd")?,
+            Some("config"),
+        )
+    } else {
+        (None, None)
+    };
+
+    if run_cwd.is_some() {
+        let is_run = cargo_args
+            .first()
+            .map(|arg| ["r", "run"].contains(&arg.as_str()))
+            .unwrap_or(false);
+        if !is_run {
+            if run_cwd_source == Some("cli") {
+                return Err(anyhow::anyhow!("--run-cwd can only be used with `run`"));
+            }
+            run_cwd = None;
+        } else {
+            let has_manifest_path = cargo_args
+                .iter()
+                .any(|arg| arg == "--manifest-path" || arg.starts_with("--manifest-path="));
+            if has_manifest_path {
+                return Err(anyhow::anyhow!(
+                    "--run-cwd cannot be combined with cargo's --manifest-path"
+                ));
+            }
+        }
+    }
+
     let entries = collect_entries(&mut wargo_config, &workspace_root)?;
     copy_files(entries, &wargo_config, &workspace_root, &dest_dir)?;
 
-    let (artifacts, exit_code) = exec_cargo_command(&dest_dir, &workspace_root, args)?;
+    let (artifacts, exit_code) =
+        exec_cargo_command(&dest_dir, &workspace_root, cargo_args, run_cwd)?;
     copy_artifacts(&dest_dir, &workspace_root, artifacts)?;
 
-    if let Some(code) = exit_code {
-        if code != 0 {
-            std::process::exit(code);
-        }
+    if let Some(code) = exit_code
+        && code != 0
+    {
+        std::process::exit(code);
     }
 
     Ok(())
@@ -145,6 +187,60 @@ fn parse_args() -> Vec<String> {
         })
         .collect();
     args
+}
+
+fn extract_run_cwd(args: Vec<String>) -> GenericResult<(Vec<String>, Option<PathBuf>)> {
+    let mut run_cwd: Option<PathBuf> = None;
+    let mut filtered: Vec<String> = Vec::with_capacity(args.len());
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        if arg == "--run-cwd" {
+            let value = iter.next().context("--run-cwd expects a directory path")?;
+            run_cwd = Some(PathBuf::from(value));
+            continue;
+        }
+
+        if let Some(value) = arg.strip_prefix("--run-cwd=") {
+            if value.is_empty() {
+                return Err(anyhow::anyhow!("--run-cwd expects a directory path"));
+            }
+            run_cwd = Some(PathBuf::from(value));
+            continue;
+        }
+
+        filtered.push(arg);
+    }
+
+    Ok((filtered, run_cwd))
+}
+
+fn resolve_run_cwd_with_base(
+    run_cwd: Option<PathBuf>,
+    base_dir: &Path,
+    source: &str,
+) -> GenericResult<Option<PathBuf>> {
+    let Some(run_cwd) = run_cwd else {
+        return Ok(None);
+    };
+
+    let mut resolved = if run_cwd.is_absolute() {
+        run_cwd
+    } else {
+        base_dir.join(run_cwd)
+    };
+
+    resolved = resolved
+        .canonicalize()
+        .with_context(|| format!("run cwd does not exist: {}", resolved.display()))?;
+
+    if !resolved.is_dir() {
+        return Err(anyhow::anyhow!(
+            "{source} must point to an existing directory"
+        ));
+    }
+
+    Ok(Some(paths::normalize_path(&resolved)))
 }
 
 fn get_wargo_config<P>(workspace_root: &P) -> GenericResult<WargoConfig>
@@ -185,12 +281,11 @@ fn get_project_dir<'a, P>(wargo_config: &'a WargoConfig, workspace_root: &'a P) 
 where
     P: AsRef<Path>,
 {
-    let project_dir = if let Some(dir) = &wargo_config.project_dir {
+    (if let Some(dir) = &wargo_config.project_dir {
         OsStr::new(dir)
     } else {
         workspace_root.as_ref().iter().next_back().unwrap()
-    };
-    project_dir
+    }) as _
 }
 
 fn collect_entries<P>(
@@ -296,10 +391,25 @@ where
     Ok(())
 }
 
+fn find_manifest_path(start: &Path, stop_at: &Path) -> Option<PathBuf> {
+    let mut current = start;
+    loop {
+        let candidate = current.join("Cargo.toml");
+        if candidate.exists() {
+            return Some(candidate);
+        }
+        if current == stop_at {
+            return None;
+        }
+        current = current.parent()?;
+    }
+}
+
 fn exec_cargo_command<P>(
     dest_dir: &P,
     workspace_root: &P,
     args: Vec<String>,
+    run_cwd: Option<PathBuf>,
 ) -> GenericResult<(Vec<PathBuf>, Option<i32>)>
 where
     P: AsRef<Path>,
@@ -329,21 +439,34 @@ where
 
             let reader = std::io::BufReader::new(cmd.stdout.take().expect("no stdout captured"));
             for message in Message::parse_stream(reader).flatten() {
-                if let Message::CompilerArtifact(artifact) = message {
-                    if [
+                if let Message::CompilerArtifact(artifact) = message
+                    && [
                         TargetKind::Bin,
                         TargetKind::DyLib,
                         TargetKind::CDyLib,
                         TargetKind::StaticLib,
                     ]
                     .contains(&artifact.target.kind[0])
-                    {
-                        for filename in artifact.filenames {
-                            files.push(filename.into_std_path_buf())
-                        }
+                {
+                    for filename in artifact.filenames {
+                        files.push(filename.into_std_path_buf())
                     }
                 }
             }
+            let status = cmd.wait()?;
+            exit_code = status.code();
+        } else if ["r", "run"].contains(&arg.as_str())
+            && let Some(run_cwd) = run_cwd
+        {
+            let manifest_path = find_manifest_path(&exec_dest, dest_dir.as_ref())
+                .context("Cargo.toml not found when trying to use --run-cwd")?;
+            cargo_args.insert(1, "--manifest-path".into());
+            cargo_args.insert(2, manifest_path.to_string_lossy().into());
+
+            let mut cmd = Command::new("cargo")
+                .args(cargo_args)
+                .current_dir(run_cwd)
+                .spawn()?;
             let status = cmd.wait()?;
             exit_code = status.code();
         } else {
