@@ -10,7 +10,7 @@
 use anyhow::Context;
 use cargo_metadata::{Message, MetadataCommand, TargetKind};
 use cprint::cprintln;
-use filetime::{set_symlink_file_times, FileTime};
+use filetime::{FileTime, set_symlink_file_times};
 use globwalk::DirEntry;
 use serde::Deserialize;
 use std::{
@@ -104,10 +104,10 @@ pub fn run(_from: &str) -> NullResult {
     let (artifacts, exit_code) = exec_cargo_command(&dest_dir, &workspace_root, args)?;
     copy_artifacts(&dest_dir, &workspace_root, artifacts)?;
 
-    if let Some(code) = exit_code {
-        if code != 0 {
-            std::process::exit(code);
-        }
+    if let Some(code) = exit_code
+        && code != 0
+    {
+        std::process::exit(code);
     }
 
     Ok(())
@@ -185,12 +185,11 @@ fn get_project_dir<'a, P>(wargo_config: &'a WargoConfig, workspace_root: &'a P) 
 where
     P: AsRef<Path>,
 {
-    let project_dir = if let Some(dir) = &wargo_config.project_dir {
+    (if let Some(dir) = &wargo_config.project_dir {
         OsStr::new(dir)
     } else {
         workspace_root.as_ref().iter().next_back().unwrap()
-    };
-    project_dir
+    }) as _
 }
 
 fn collect_entries<P>(
@@ -329,18 +328,17 @@ where
 
             let reader = std::io::BufReader::new(cmd.stdout.take().expect("no stdout captured"));
             for message in Message::parse_stream(reader).flatten() {
-                if let Message::CompilerArtifact(artifact) = message {
-                    if [
+                if let Message::CompilerArtifact(artifact) = message
+                    && [
                         TargetKind::Bin,
                         TargetKind::DyLib,
                         TargetKind::CDyLib,
                         TargetKind::StaticLib,
                     ]
                     .contains(&artifact.target.kind[0])
-                    {
-                        for filename in artifact.filenames {
-                            files.push(filename.into_std_path_buf())
-                        }
+                {
+                    for filename in artifact.filenames {
+                        files.push(filename.into_std_path_buf())
                     }
                 }
             }
