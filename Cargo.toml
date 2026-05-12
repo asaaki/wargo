@@ -38,7 +38,7 @@ anyhow = "1.0.102"
 cargo_metadata = "0.23.1"
 cprint = { version = "1.0.0", features = ["ceprint"] }
 dirs = "6.0.0"
-filetime = "0.2.27"
+filetime = "0.2.28"
 globwalk = "0.9.1"
 indicatif = "0.18.4"
 serde = { version = "1.0.228", features = ["derive"] }
