@@ -31,6 +31,6 @@ fn _is_wsl2() -> bool {
 
 /// Test if the program is running under WSL
 #[cfg(not(target_os = "linux"))]
-fn _is_wsl2() -> bool {
+const fn _is_wsl2() -> bool {
     false
 }
