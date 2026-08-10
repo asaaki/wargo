@@ -377,14 +377,14 @@ where
             fs::copy(src_path, dst_path).with_context(|| {
                 format!(
                     "Copying failed: {} -> {}",
-                    &src_path.display(),
-                    &dst_path.display()
+                    src_path.display(),
+                    dst_path.display()
                 )
             })?;
         }
 
         set_symlink_file_times(dst_path, atime, mtime).with_context(|| {
-            format!("Setting file timestamps failed for {}", &dst_path.display())
+            format!("Setting file timestamps failed for {}", dst_path.display())
         })?;
     }
     bar.finish_with_message("Files copied");
