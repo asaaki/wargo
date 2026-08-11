@@ -18,6 +18,10 @@ exclude = [".assets/*", ".cargo/*", ".github/*", "Wargo.toml"]
 
 default-run = "wargo"
 
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/{ name }-{ version }/{ name }-{ target }"
+pkg-fmt = "tgz"
+
 [lib]
 name = "wargo_lib"
 
